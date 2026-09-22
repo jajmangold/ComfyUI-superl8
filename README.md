@@ -8,17 +8,93 @@ ComfyUI-SuperL8 brings [SuperL8](https://github.com/jajmangold/superl8)'s INT8 D
 
 Diffusion transformers are memory-bound. A 22B-parameter DiT like LTX-2.3 needs ~44 GB in fp16 — doesn't fit on a single 24 GB card. INT8 cuts that in half. But naive INT8 quantization destroys image quality on some layers while being invisible on others. SuperL8's SQNR gating quantizes every layer, measures the actual quality loss, and only keeps the quantization where it's safe.
 
-## Features
+## What's implemented
 
-- **INT8 W8A8 and W4A8 DiT inference** via SuperL8's dp4a kernels
-- **Per-layer SQNR accuracy gating** — quantize aggressively, verify automatically, fall back to fp16 where it matters
-- **17 registered DiT architectures** — Z-Image, FLUX.1-dev, Qwen-Image, LTX-2.3, Wan2.2, SD3.5, Sana, and more
-- **GGUF native k-quant loading** — Q2_K through Q6_K, loaded in-kernel with dp4a
-- **Multi-GPU pipeline parallelism** — split oversized DiTs across GPUs
-- **Tiled DiT/VAE processing** — memory-budget-controlled inference for large images
-- **LoRA composition** — apply LoRA adapters to quantized models
-- **TeaCache acceleration** — skip redundant DiT blocks
-- **SAM3 / SAM3D encoder integration** — segmentation alongside generation
+### DiT inference
+
+| Component | Details |
+|---|---|
+| INT8 W8A8 DiT forward | Full transformer block (attention + MLP) in INT8 via dp4a kernels. |
+| INT8 W4A8 DiT forward | 4-bit weight variant for memory-constrained cards. |
+| SQNR accuracy gating | Per-layer signal-to-quantization-noise ratio check. Automatic fp16 fallback when quality drops below threshold. |
+| FP16 fallback path | Graceful degradation — quantize what's safe, keep the rest in fp16. |
+
+### Attention
+
+| Component | Details |
+|---|---|
+| Self-attention INT8 | SuperL8's `attn_int8_fwd` for DiT self-attention. |
+| Cross-attention INT8 | Quantized cross-attention for text-encoder conditioning. |
+| rotary positional embedding | Fused RoPE in INT8 attention path. |
+| Attention masking | STA (spatio-temporal attention) masking for video DiTs. |
+| DiT block fusion | Fused attention + MLP block for reduced launch overhead. |
+
+### Model support
+
+| Architecture | INT8 DiT | GGUF DiT | Status |
+|---|---|---|---|
+| Z-Image Turbo | Yes | Q4_K_M | Validated |
+| FLUX.1-dev | Yes | — | Validated |
+| Qwen-Image | Yes | — | Validated |
+| Qwen-Image-Edit | Yes | — | Validated |
+| LTX-2.3 | Yes | Q4_K_M | Validated |
+| Wan2.2 | Yes | — | Experimental |
+| SD3.5 | Yes | — | Experimental |
+| Sana | Yes | — | Experimental |
+| Ideogram | Yes | — | Experimental |
+| AuraFlow | Yes | — | Experimental |
+
+### Weight loading
+
+| Component | Details |
+|---|---|
+| SuperL8 format | mmap zero-copy load of `.superl8` quantized DiTs. |
+| GGUF native | Load Q2_K–Q6_K k-quant DiTs directly via dp4a kernels. |
+| Compat layer | Fallback to ComfyUI-GGUF ops if native path unavailable. |
+| LoRA support | Apply LoRA adapters to quantized base models. |
+| Component loading | Text encoder + VAE loaded via `SuperL8ComponentLoader`. |
+
+### Tiling and memory
+
+| Component | Details |
+|---|---|
+| Tiled DiT | Split DiT inference across tiles for large images. Configurable tile size. |
+| Tiled VAE | Memory-budget-controlled VAE decode. Configurable max VRAM. |
+| Memory tracking | Live VRAM usage monitoring for tile scheduling. |
+
+### Multi-GPU
+
+| Component | Details |
+|---|---|
+| Pipeline parallelism | Split DiT layers across GPUs. |
+| CFG parallel | Classifier-free guidance split across two GPUs. |
+| GPU election | Fail-closed GPU selection based on HBM availability and process exclusion. |
+| Peer routes | Direct GPU-to-GPU transfer for pipeline stages. |
+
+### Acceleration
+
+| Component | Details |
+|---|---|
+| TeaCache | Skip redundant DiT blocks based on activation similarity. |
+| Step controller | Dynamic step scheduling with profiling hooks. |
+| AYS guidance distill | Adversarial You Look Only Once guidance distillation support. |
+
+### VLM / editing
+
+| Component | Details |
+|---|---|
+| Qwen-Image-Edit | Image editing via Qwen-Image-Edit models. |
+| SAM3 / SAM3D | Segment Anything 3D encoder integration. |
+| Z-Image resident service | HTTP daemon for persistent Z-Image inference. |
+
+### Testing
+
+| Component | Details |
+|---|---|
+| 57 unit tests | Architecture registry, attention gating, GGUF ops, LoRA, tiling, quantization. |
+| 18 e2e tests | Real GPU + real weights smoke tests for each validated architecture. |
+| SQNR validation | Per-layer quality metrics comparing INT8 vs fp16 outputs. |
+| Quality metrics | PSNR, SSIM, cosine similarity for image output validation. |
 
 ## Install
 
@@ -36,19 +112,6 @@ pip install https://github.com/jajmangold/ComfyUI-superl8/releases/download/v0.1
 ```
 
 Requires Python 3.10+, PyTorch 2.0+, ComfyUI 0.3.0+, and a Volta (sm_70) GPU for int8 dp4a acceleration.
-
-## Supported architectures
-
-| Architecture | INT8 DiT | GGUF DiT | Status |
-|---|---|---|---|
-| Z-Image Turbo | Yes | Q4_K_M | Validated |
-| FLUX.1-dev | Yes | — | Validated |
-| Qwen-Image | Yes | — | Validated |
-| Qwen-Image-Edit | Yes | — | Validated |
-| LTX-2.3 | Yes | Q4_K_M | Validated |
-| Wan2.2 | Yes | — | Experimental |
-| SD3.5 | Yes | — | Experimental |
-| Sana | Yes | — | Experimental |
 
 ## Nodes
 
@@ -71,6 +134,19 @@ Requires Python 3.10+, PyTorch 2.0+, ComfyUI 0.3.0+, and a Volta (sm_70) GPU for
 | `SUPERL8_MODEL_ROOT` | Root directory for model weights (required) |
 | `FNI8_WEIGHTS_DIR` | Weights directory for e2e tests and benchmarks |
 | `FNI8_GPU` | GPU index for e2e tests (default: 1) |
+
+## Roadmap
+
+Performance improvements planned for upcoming releases:
+
+- **Persistent DiT resident** — keep the DiT loaded in VRAM across workflows to eliminate reload overhead.
+- **Tiled attention** — attention computed over tiles to support images larger than VRAM without quality loss from tiling artifacts.
+- **Multi-GPU expert parallelism** — for MoE DiTs (like Hunyuan), route experts to specific GPUs.
+- **INT4 GEMM for DiT MLPs** — 4-bit weight GEMM for the MLP layers which are typically the memory bottleneck.
+- **Compile-time SQNR calibration** — auto-calibrate per-layer SQNR thresholds from a validation set instead of using fixed defaults.
+- **Triton kernel fallback** — provide Triton implementations as fallback for non-Volta GPUs.
+- **Video DiT streaming** — frame-by-frame streaming for long video generation without pre-allocating full temporal context.
+- **ControlNet INT8** — quantize ControlNet conditioning to match the DiT quantization level.
 
 ## Related repos
 
