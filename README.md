@@ -1,4 +1,4 @@
-# ComfyUI-superl8
+# ComfyUI-SuperL8
 
 INT8 quantized diffusion model nodes for ComfyUI.
 
@@ -46,15 +46,15 @@ pip install -e .
 
 ## Nodes
 
-- **UnetLoaderFNI8** — loads an `.fni8`-quantized DiT
-- **UnetLoaderFNI8GGUF** — loads a GGUF DiT with native int8 dp4a kernels
-- **FNI8ComponentLoader** — loads matching text encoder / VAE
-- **FNI8Multigpu** — moves the diffusion model to a second GPU
-- **FNI8PipelineParallel** — splits an oversized DiT across GPUs
+- **UnetLoaderSuperL8** — loads a SuperL8-quantized DiT
+- **UnetLoaderSuperL8GGUF** — loads a GGUF DiT with native int8 dp4a kernels
+- **SuperL8ComponentLoader** — loads matching text encoder / VAE
+- **SuperL8Multigpu** — moves the diffusion model to a second GPU
+- **SuperL8PipelineParallel** — splits an oversized DiT across GPUs
 - **TiledVAEDecode** — tiled VAE decode with memory budget control
 - **ApplyTiledDiT** — tiled DiT inference for large images
-- **FNI8StepController** — step scheduling and profiling
-- **FNI8TeaCache** — TeaCache acceleration
+- **SuperL8StepController** — step scheduling and profiling
+- **SuperL8TeaCache** — TeaCache acceleration
 
 ## Environment Variables
 
@@ -66,4 +66,4 @@ pip install -e .
 
 ## License
 
-Apache-2.0. Depends on `fni8` (BSD-3).
+BSD-3-Clause. Depends on SuperL8 (BSD-3).
