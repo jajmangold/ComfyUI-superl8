@@ -15,13 +15,19 @@ INT8 quantized diffusion model nodes for ComfyUI.
 - TeaCache acceleration support
 - SAM3 / SAM3D encoder integration
 
-## Installation
+## Install
 
 ```bash
 cd ComfyUI/custom_nodes
 git clone https://github.com/jajmangold/ComfyUI-superl8
 cd ComfyUI-superl8
 pip install -e .
+```
+
+Or install the wheel directly:
+
+```bash
+pip install https://github.com/jajmangold/ComfyUI-superl8/releases/download/v0.1.0/comfyui_superl8-0.1.0-py3-none-any.whl
 ```
 
 ### Requirements
@@ -66,4 +72,4 @@ pip install -e .
 
 ## License
 
-BSD-3-Clause. Depends on SuperL8 (BSD-3).
+BSD-3-Clause. See [LICENSE](LICENSE).
