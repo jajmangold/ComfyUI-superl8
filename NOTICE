@@ -1,0 +1,15 @@
+ComfyUI-fni8
+Copyright 2026 fni8 authors
+
+int8 dp4a (sm_70 / Volta) acceleration for diffusion DiTs in ComfyUI.
+
+This project integrates with ComfyUI (https://github.com/comfyanonymous/ComfyUI,
+GPL-3.0) as a custom-node package via its public node/ops-patch API; it does not
+modify or redistribute ComfyUI. The ops-patch integration approach follows the
+precedent set by ComfyUI-GGUF (city96, Apache-2.0). It depends on the sibling
+`fni8` kernel library (BSD-3-Clause) for the dp4a GEMM, the bidirectional int8
+FlashAttention, and the .fni8 weight format.
+
+Diffusion model architectures (Flux, SD3, Qwen-Image, Z-Image, Wan, LTX, etc.)
+are the property of their respective authors; this package only accelerates their
+inference — it ships no model weights.

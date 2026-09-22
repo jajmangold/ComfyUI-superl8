@@ -1,0 +1,130 @@
+{
+  "_class_name": "CausalVideoAutoencoder",
+  "dims": 3,
+  "in_channels": 3,
+  "out_channels": 3,
+  "latent_channels": 128,
+  "encoder_blocks": [
+    [
+      "res_x",
+      {
+        "num_layers": 4
+      }
+    ],
+    [
+      "compress_space_res",
+      {
+        "multiplier": 2
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 6
+      }
+    ],
+    [
+      "compress_time_res",
+      {
+        "multiplier": 2
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 4
+      }
+    ],
+    [
+      "compress_all_res",
+      {
+        "multiplier": 2
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 2
+      }
+    ],
+    [
+      "compress_all_res",
+      {
+        "multiplier": 1
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 2
+      }
+    ]
+  ],
+  "decoder_blocks": [
+    [
+      "res_x",
+      {
+        "num_layers": 4
+      }
+    ],
+    [
+      "compress_space",
+      {
+        "multiplier": 2
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 6
+      }
+    ],
+    [
+      "compress_time",
+      {
+        "multiplier": 2
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 4
+      }
+    ],
+    [
+      "compress_all",
+      {
+        "multiplier": 1
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 2
+      }
+    ],
+    [
+      "compress_all",
+      {
+        "multiplier": 2
+      }
+    ],
+    [
+      "res_x",
+      {
+        "num_layers": 2
+      }
+    ]
+  ],
+  "scaling_factor": 1.0,
+  "norm_layer": "pixel_norm",
+  "patch_size": 4,
+  "latent_log_var": "uniform",
+  "use_quant_conv": false,
+  "causal_decoder": false,
+  "timestep_conditioning": false,
+  "normalize_latent_channels": false,
+  "encoder_base_channels": 128,
+  "decoder_base_channels": 128,
+  "spatial_padding_mode": "zeros"
+}

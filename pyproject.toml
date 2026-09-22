@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ComfyUI-superl8"
+version = "0.1.0"
+description = "INT8 quantized diffusion model nodes for ComfyUI"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0",
+    "numpy",
+    "superl8",
+]
+
+[project.urls]
+Homepage = "https://github.com/jajmangold/ComfyUI-superl8"
+Repository = "https://github.com/jajmangold/ComfyUI-superl8"
+Issues = "https://github.com/jajmangold/ComfyUI-superl8/issues"
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff"]
+
+[tool.setuptools.packages.find]
+include = ["comfyui_superl8*"]
+
+[tool.pytest.ini_options]
+markers = [
+    "comfy_e2e: headless ComfyUI + real weights e2e smoke test (needs a Volta/CMP GPU; opt-in via `docker compose run --rm e2e`, see docker/Dockerfile)",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.comfy]
+PublisherId = "superl8"
+DisplayName = "ComfyUI-superl8 (INT8 quantized diffusion)"
+requires-comfyui = ">=0.3.0"

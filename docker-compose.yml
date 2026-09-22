@@ -1,0 +1,42 @@
+# The headless ComfyUI test harness: layers ComfyUI + a built fni8 +
+# this node pack in one image, mounts the weights archive, and runs the
+# `comfy_e2e`-marked smoke test against real `.fni8` DiT weights on a Volta/CMP GPU.
+#
+#   docker compose build              # build the image once (CUDA devel + torch +
+#                                      # fni8 compiled for sm_70 + ComfyUI — slow)
+#   docker compose run --rm e2e       # run the e2e smoke test
+
+x-common: &common
+  image: comfyui-superl8-e2e
+  build:
+    context: .
+    dockerfile: docker/Dockerfile
+  working_dir: /opt/ComfyUI
+  environment:
+    - TORCH_CUDA_ARCH_LIST=7.0
+    - CUDA_DEVICE_ORDER=PCI_BUS_ID
+    - CUDA_VISIBLE_DEVICES
+    - FNI8_GPU_ELECTED
+    - FNI8_GPU_UUID
+    - HF_TOKEN
+    - HUGGING_FACE_HUB_TOKEN
+    - FNI8_WEIGHTS_DIR
+    - SUPERL8_MODEL_ROOT
+  volumes:
+    - ./:/opt/ComfyUI/custom_nodes/ComfyUI-superl8
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            device_ids: ["${FNI8_GPU:-1}"]
+            capabilities: [gpu]
+
+services:
+  e2e:
+    <<: *common
+    # --import-mode=importlib: this repo's dir name ("ComfyUI-superl8", a hyphen) is not
+    # a valid Python package name, so pytest's default prepend mode walks up into the
+    # node-entrypoint __init__.py and its relative import explodes. importlib imports
+    # each test file directly, the way ComfyUI itself loads the node pack.
+    command: python3 -m pytest -m comfy_e2e -v --import-mode=importlib custom_nodes/ComfyUI-superl8/tests/e2e

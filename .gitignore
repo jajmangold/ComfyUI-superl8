@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+*.fni8
+build/
+dist/
+.venv/
+.pipe_out/
+*.key
+*.pem
+*.cert
+.env
+.env.local

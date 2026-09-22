@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check comfyui_superl8/ tests/
+      - run: ruff format --check comfyui_superl8/ tests/
+
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -e ".[dev]"
+      - name: Run unit tests
+        run: pytest tests/ -q --tb=short -m "not comfy_e2e"
+
+  e2e-tests:
+    runs-on: [self-hosted, sm70]
+    if: contains(github.event.pull_request.labels.*.name, 'run-e2e')
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run e2e tests
+        run: |
+          pip install torch==2.10.0+cu129 --index-url https://download.pytorch.org/whl/cu129
+          pip install -e ".[dev]"
+          pytest tests/ -q --tb=short -m comfy_e2e
