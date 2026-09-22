@@ -1,6 +1,6 @@
 # ComfyUI-SuperL8
 
-**INT8 diffusion that knows when to stop.**
+**INT8 quantized diffusion DiTs with SQNR accuracy gating.**
 
 ComfyUI-SuperL8 brings [SuperL8](https://github.com/jajmangold/superl8)'s INT8 DP4A kernels to ComfyUI for quantized DiT inference. The key innovation is **per-layer SQNR gating** — each attention and linear layer is quantized, verified against a signal-to-quantization-noise ratio threshold, and automatically falls back to fp16 when quality drops. You get aggressive quantization where it's free and accurate inference where it matters.
 
